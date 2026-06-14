@@ -5,7 +5,6 @@ require("dotenv").config();
 
 const app = express();
 
-/* ---------------- MIDDLEWARES ---------------- */
 app.use(
   cors({
     origin: [
@@ -19,19 +18,16 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/* ---------------- ROUTES ---------------- */
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/doctor", require("./routes/doctorRoutes"));
 app.use("/api/patient", require("./routes/patientRoutes"));
 app.use("/api/appointments", require("./routes/appointmentRoutes"));
 app.use("/api/medicines", require("./routes/medicineRoutes"));
 
-/* ---------------- HEALTH CHECK ---------------- */
 app.get("/", (req, res) => {
   res.json({ message: "Hospital Patient Tracker API running 🚀" });
 });
 
-/* ---------------- DB CONNECTION ---------------- */
 let isConnected = false;
 
 async function connectDB() {
@@ -48,7 +44,6 @@ async function connectDB() {
 
 connectDB();
 
-/* ---------------- LOCAL SERVER ONLY ---------------- */
 if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 8080;
 
@@ -57,5 +52,4 @@ if (process.env.NODE_ENV !== "production") {
   });
 }
 
-/* ---------------- EXPORT FOR VERCEL ---------------- */
 module.exports = app;
