@@ -5,46 +5,57 @@ require("dotenv").config();
 
 const app = express();
 
-app.use(cors());
+/* ---------------- MIDDLEWARES ---------------- */
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://hospital-patient-tracker.vercel.app",
+    ],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const authRoutes = require("./routes/authRoutes");
-const patientRoutes = require("./routes/patientRoutes");
-const doctorRoutes = require("./routes/doctorRoutes");
-const appointmentRoutes = require("./routes/appointmentRoutes");
-const medicineRoutes = require("./routes/medicineRoutes");
+/* ---------------- ROUTES ---------------- */
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/doctor", require("./routes/doctorRoutes"));
+app.use("/api/patient", require("./routes/patientRoutes"));
+app.use("/api/appointments", require("./routes/appointmentRoutes"));
+app.use("/api/medicines", require("./routes/medicineRoutes"));
 
-app.use("/api/auth", authRoutes);
-app.use("/api/doctor", doctorRoutes);
-app.use("/api/patient", patientRoutes);
-app.use("/api/appointments", appointmentRoutes);
-app.use("/api/medicines", medicineRoutes);
+/* ---------------- HEALTH CHECK ---------------- */
+app.get("/", (req, res) => {
+  res.json({ message: "Hospital Patient Tracker API running 🚀" });
+});
 
-const port = process.env.PORT || 8080;
-const dbUrl = process.env.ATLASDB_URL;
+/* ---------------- DB CONNECTION ---------------- */
+let isConnected = false;
 
-async function main() {
+async function connectDB() {
+  if (isConnected) return;
+
   try {
-    await mongoose.connect(dbUrl);
-    console.log("Connected to MongoDB");
-
-    app.listen(port, () => {
-      console.log(`App is listening on port ${port}`);
-    });
+    await mongoose.connect(process.env.ATLASDB_URL);
+    isConnected = true;
+    console.log("✅ MongoDB connected");
   } catch (err) {
-    console.log("DB connection error:", err);
-    process.exit(1);
+    console.error("❌ MongoDB connection error:", err);
   }
 }
 
-main();
+connectDB();
 
-app.get("/", (req, res) => {
-  res.json({ message: "API is running 🚀" });
-});
+/* ---------------- LOCAL SERVER ONLY ---------------- */
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 8080;
 
-app.use((req, res, next) => {
-  console.log("HIT:", req.method, req.originalUrl);
-  next();
-});
+  app.listen(PORT, () => {
+    console.log(`🚀 Local server running on http://localhost:${PORT}`);
+  });
+}
+
+/* ---------------- EXPORT FOR VERCEL ---------------- */
+module.exports = app;
